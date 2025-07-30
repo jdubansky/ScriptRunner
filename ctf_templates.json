@@ -1,0 +1,47 @@
+[
+  {
+    "label": "Nmap Full",
+    "command": "nmap -A <$IP>",
+    "category": "Recon"
+  },
+  {
+    "label": "Nikto",
+    "command": "nikto -h <$HOST>",
+    "category": "Web"
+  },
+  {
+    "label": "ls",
+    "command": "ls",
+    "category": "Misc"
+  },
+  {
+    "label": "openvpn",
+    "command": "sudo openvpn ~/Desktop/vpn.ovpn ",
+    "category": "Misc"
+  },
+  {
+    "label": "test",
+    "command": "whoami",
+    "category": "Misc"
+  },
+  {
+    "label": "test2",
+    "command": "ls",
+    "category": "Misc"
+  },
+  {
+    "label": "test3",
+    "command": "ls",
+    "category": "Misc"
+  },
+  {
+    "label": "test6",
+    "command": "ls",
+    "category": "Misc"
+  },
+  {
+    "label": "python server 80",
+    "command": "python -m http.server 80",
+    "category": "Web"
+  }
+]
