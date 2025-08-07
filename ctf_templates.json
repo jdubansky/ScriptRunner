@@ -1,13 +1,43 @@
 [
   {
-    "label": "Nmap Full",
-    "command": "nmap -A <$IP>",
+    "label": "Nmap All Ports",
+    "command": "sudo nmap -sS -Pn -T5 -p- <$IP>",
+    "category": "Recon"
+  },
+  {
+    "label": "Nmap Basic",
+    "command": "sudo nmap -sC -sV -vv <$IP>",
+    "category": "Recon"
+  },
+  {
+    "label": "Nmap UDP",
+    "command": "sudo nmap -F -T4 -sU -Pn --max-parallelism 512 --min-rtt-timeout 50ms --max-retries 1 -n --open <$IP>",
     "category": "Recon"
   },
   {
     "label": "Nikto",
     "command": "nikto -h <$HOST>",
     "category": "Web"
+  },
+  {
+    "label": "SMBCLient List",
+    "command": "smbclient -L //<$IP>",
+    "category": "SMB"
+  },
+  {
+    "label": "crackmapexec",
+    "command": "crackmapexec smb <$IP> --shares ",
+    "category": "SMB"
+  },
+  {
+    "label": "crackmapexec userpass",
+    "command": "crackmapexec smb <$IP> -u '<$Username>' -p '<$Password>' --shares ",
+    "category": "SMB"
+  },
+  {
+    "label": "ls",
+    "command": "ls",
+    "category": "SMB"
   },
   {
     "label": "ls",
@@ -20,18 +50,8 @@
     "category": "Misc"
   },
   {
-    "label": "test",
-    "command": "whoami",
-    "category": "Misc"
-  },
-  {
-    "label": "test2",
-    "command": "ls",
-    "category": "Misc"
-  },
-  {
-    "label": "test3",
-    "command": "ls",
+    "label": "xfreerdp",
+    "command": "xfreerdp /u:offsec /p:lab /v:<$IP> /size:75%  /cert:ignore  +drive:smbfolder,/home/",
     "category": "Misc"
   },
   {
@@ -43,5 +63,25 @@
     "label": "python server 80",
     "command": "python -m http.server 80",
     "category": "Web"
+  },
+  {
+    "label": "nano host file",
+    "command": " sudo nano /etc/hosts",
+    "category": "local"
+  },
+  {
+    "label": "ffuf80",
+    "command": "ffuf -w ~/directoryFUZZ/raft-large-directories.txt -u http://<$IP>/FUZZ",
+    "category": "Web"
+  },
+  {
+    "label": "ffufHost443",
+    "command": "ffuf -w ~/directoryFUZZ/raft-large-directories.txt -u http://<$HOST>/FUZZ/",
+    "category": "Web"
+  },
+  {
+    "label": "nc port 80",
+    "command": "sudo nc -lvnp 80",
+    "category": "Listeners"
   }
 ]

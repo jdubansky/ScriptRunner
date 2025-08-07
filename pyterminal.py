@@ -94,6 +94,12 @@ class TerminalApp(Gtk.Window):
             GLib.SpawnFlags.DEFAULT, None, None, -1, None, None
         )
 
+        terminal.set_input_enabled(True)
+        terminal.set_can_focus(True)
+        terminal.connect("key-press-event", self.on_terminal_keypress)
+        terminal.connect("button-press-event", self.on_terminal_right_click)
+
+
         label = Gtk.Label(label=f"Tab {len(self.terminals) + 1}")
         self.terminals.append(terminal)
 
@@ -102,6 +108,37 @@ class TerminalApp(Gtk.Window):
 
         self.notebook.show_all()
         self.creating_tab = False
+
+    def on_terminal_keypress(self, widget, event):
+        ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
+        shift = event.state & Gdk.ModifierType.SHIFT_MASK
+        key = Gdk.keyval_name(event.keyval)
+
+        if ctrl and shift and key == 'C':
+            widget.copy_clipboard()
+            return True
+        elif ctrl and shift and key == 'V':
+            widget.paste_clipboard()
+            return True
+
+        return False  # let other keys pass through
+    
+    def on_terminal_right_click(self, terminal, event):
+        if event.button == 3:
+            menu = Gtk.Menu()
+
+            copy_item = Gtk.MenuItem(label="Copy")
+            copy_item.connect("activate", lambda _: terminal.copy_clipboard())
+            menu.append(copy_item)
+
+            paste_item = Gtk.MenuItem(label="Paste")
+            paste_item.connect("activate", lambda _: terminal.paste_clipboard())
+            menu.append(paste_item)
+
+            menu.show_all()
+            menu.popup_at_pointer(event)
+            return True
+        return False
 
     def create_new_tab_from_button(self):
         self.creating_tab = True
@@ -113,6 +150,11 @@ class TerminalApp(Gtk.Window):
             Vte.PtyFlags.DEFAULT, None, ["/bin/bash"], [],
             GLib.SpawnFlags.DEFAULT, None, None, -1, None, None
         )
+
+        terminal.set_input_enabled(True)
+        terminal.set_can_focus(True)
+        terminal.connect("key-press-event", self.on_terminal_keypress)
+        terminal.connect("button-press-event", self.on_terminal_right_click)
 
         label = Gtk.Label(label=f"Tab {len(self.terminals) + 1}")
         self.terminals.append(terminal)
