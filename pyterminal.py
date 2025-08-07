@@ -73,7 +73,103 @@ class TerminalApp(Gtk.Window):
 
         # Detect Add Tab selection
         self.notebook.connect("switch-page", self.on_tab_switched)
+        
+        # Apply custom styling for close buttons
+        self.apply_custom_styling()
 
+    def apply_custom_styling(self):
+        """Apply custom CSS styling for close buttons"""
+        css_provider = Gtk.CssProvider()
+        css_data = """
+        .close-button {
+            background: transparent;
+            border: none;
+            padding: 2px;
+            margin: 0px;
+        }
+        .close-button:hover {
+            background-color: #ff6b6b;
+            color: white;
+            border-radius: 3px;
+        }
+        .close-button:active {
+            background-color: #ff5252;
+        }
+        """
+        css_provider.load_from_data(css_data.encode())
+        
+        screen = Gdk.Screen.get_default()
+        style_context = Gtk.StyleContext()
+        style_context.add_provider_for_screen(
+            screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+    def create_tab_label(self, title):
+        """Create a tab label with a close button"""
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4)
+        
+        # Tab title
+        label = Gtk.Label(label=title)
+        hbox.pack_start(label, True, True, 0)
+        
+        # Close button
+        close_btn = Gtk.Button()
+        close_btn.set_relief(Gtk.ReliefStyle.NONE)
+        close_btn.set_focus_on_click(False)
+        
+        # Create a simple "×" symbol for the close button
+        close_label = Gtk.Label(label="×")
+        close_label.set_markup("<span size='large' weight='bold'>×</span>")
+        close_btn.add(close_label)
+        
+        # Style the close button
+        close_btn.get_style_context().add_class("close-button")
+        
+        # Connect close button to close tab function
+        close_btn.connect("clicked", self.close_tab)
+        
+        hbox.pack_start(close_btn, False, False, 0)
+        hbox.show_all()
+        
+        return hbox
+
+    def close_tab(self, button):
+        """Close the tab associated with the close button"""
+        # Find which tab this close button belongs to
+        tab_label = button.get_parent()
+        page_num = None
+        
+        for i in range(self.notebook.get_n_pages()):
+            if self.notebook.get_tab_label(self.notebook.get_nth_page(i)) == tab_label:
+                page_num = i
+                break
+        
+        if page_num is not None and page_num < self.notebook.get_n_pages() - 1:  # Don't close the "+" tab
+            # Remove the terminal from our list
+            terminal = self.notebook.get_nth_page(page_num)
+            if terminal in self.terminals:
+                self.terminals.remove(terminal)
+            
+            # Remove the page from the notebook
+            self.notebook.remove_page(page_num)
+            
+            # Renumber remaining tabs
+            self.renumber_tabs()
+
+    def renumber_tabs(self):
+        """Renumber tab labels after closing a tab"""
+        for i, terminal in enumerate(self.terminals):
+            page_num = None
+            for j in range(self.notebook.get_n_pages()):
+                if self.notebook.get_nth_page(j) == terminal:
+                    page_num = j
+                    break
+            
+            if page_num is not None:
+                # Update the label text
+                tab_label = self.notebook.get_tab_label(terminal)
+                title_label = tab_label.get_children()[0]  # Get the first child (the title label)
+                title_label.set_text(f"Tab {i + 1}")
 
     def add_addtab_button_tab(self):
         # Create a simple label "+" instead of a full Gtk.Box with a button
@@ -81,7 +177,6 @@ class TerminalApp(Gtk.Window):
         tab_label = Gtk.Label(label="+")   # This is what shows as the tab text
 
         self.notebook.append_page(placeholder, tab_label)
-
 
         self.creating_tab = True
 
@@ -99,11 +194,11 @@ class TerminalApp(Gtk.Window):
         terminal.connect("key-press-event", self.on_terminal_keypress)
         terminal.connect("button-press-event", self.on_terminal_right_click)
 
-
-        label = Gtk.Label(label=f"Tab {len(self.terminals) + 1}")
+        # Create tab label with close button
+        tab_label = self.create_tab_label(f"Tab {len(self.terminals) + 1}")
         self.terminals.append(terminal)
 
-        self.notebook.insert_page(terminal, label, plus_index)
+        self.notebook.insert_page(terminal, tab_label, plus_index)
         self.notebook.set_current_page(plus_index)
 
         self.notebook.show_all()
@@ -120,8 +215,22 @@ class TerminalApp(Gtk.Window):
         elif ctrl and shift and key == 'V':
             widget.paste_clipboard()
             return True
+        elif ctrl and key == 'w':  # Ctrl+W to close current tab
+            self.close_current_tab()
+            return True
 
         return False  # let other keys pass through
+
+    def close_current_tab(self):
+        """Close the currently active tab"""
+        current_page = self.notebook.get_current_page()
+        if current_page < self.notebook.get_n_pages() - 1:  # Don't close the "+" tab
+            terminal = self.notebook.get_nth_page(current_page)
+            if terminal in self.terminals:
+                self.terminals.remove(terminal)
+            
+            self.notebook.remove_page(current_page)
+            self.renumber_tabs()
     
     def on_terminal_right_click(self, terminal, event):
         if event.button == 3:
@@ -134,6 +243,13 @@ class TerminalApp(Gtk.Window):
             paste_item = Gtk.MenuItem(label="Paste")
             paste_item.connect("activate", lambda _: terminal.paste_clipboard())
             menu.append(paste_item)
+
+            # Add separator and close tab option
+            menu.append(Gtk.SeparatorMenuItem())
+            
+            close_item = Gtk.MenuItem(label="Close Tab")
+            close_item.connect("activate", lambda _: self.close_current_tab())
+            menu.append(close_item)
 
             menu.show_all()
             menu.popup_at_pointer(event)
@@ -156,10 +272,11 @@ class TerminalApp(Gtk.Window):
         terminal.connect("key-press-event", self.on_terminal_keypress)
         terminal.connect("button-press-event", self.on_terminal_right_click)
 
-        label = Gtk.Label(label=f"Tab {len(self.terminals) + 1}")
+        # Create tab label with close button
+        tab_label = self.create_tab_label(f"Tab {len(self.terminals) + 1}")
         self.terminals.append(terminal)
 
-        self.notebook.insert_page(terminal, label, plus_index)
+        self.notebook.insert_page(terminal, tab_label, plus_index)
         
         # Move focus to the new tab (same index as just inserted)
         GLib.idle_add(self.notebook.set_current_page, plus_index)
@@ -251,9 +368,9 @@ class TerminalApp(Gtk.Window):
             )
 
             index = self.notebook.get_n_pages() - 1  # Insert before the "+" tab
-            label = Gtk.Label(label=f"Tab {len(self.terminals) + 1}")
+            tab_label = self.create_tab_label(f"Tab {len(self.terminals) + 1}")
             self.terminals.append(terminal)
-            self.notebook.insert_page(terminal, label, index)
+            self.notebook.insert_page(terminal, tab_label, index)
             self.notebook.set_current_page(index)
             self.notebook.show_all()
 
