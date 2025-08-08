@@ -1,5 +1,5 @@
 {
-  "IP": "10.10.10.239",
+  "IP": "127.0.0.1",
   "HOST": "staging.test.htb",
   "PORT": "9001",
   "Username": "",

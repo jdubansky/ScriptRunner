@@ -184,8 +184,9 @@ class TerminalApp(Gtk.Window):
         plus_index = self.notebook.get_n_pages() - 1
 
         terminal = Vte.Terminal()
+        home_dir = os.path.expanduser("~")
         terminal.spawn_async(
-            Vte.PtyFlags.DEFAULT, None, ["/bin/bash"], [],
+            Vte.PtyFlags.DEFAULT, home_dir, ["/bin/bash"], [],
             GLib.SpawnFlags.DEFAULT, None, None, -1, None, None
         )
 
@@ -262,8 +263,9 @@ class TerminalApp(Gtk.Window):
         plus_index = self.notebook.get_n_pages() - 1
 
         terminal = Vte.Terminal()
+        home_dir = os.path.expanduser("~")
         terminal.spawn_async(
-            Vte.PtyFlags.DEFAULT, None, ["/bin/bash"], [],
+            Vte.PtyFlags.DEFAULT, home_dir, ["/bin/bash"], [],
             GLib.SpawnFlags.DEFAULT, None, None, -1, None, None
         )
 
@@ -362,8 +364,9 @@ class TerminalApp(Gtk.Window):
 
             # Create new terminal
             terminal = Vte.Terminal()
+            home_dir = os.path.expanduser("~")
             terminal.spawn_async(
-                Vte.PtyFlags.DEFAULT, None, ["/bin/bash"], [],
+                Vte.PtyFlags.DEFAULT, home_dir, ["/bin/bash"], [],
                 GLib.SpawnFlags.DEFAULT, None, None, -1, None, None
             )
 
@@ -378,7 +381,7 @@ class TerminalApp(Gtk.Window):
             self.notebook.connect("switch-page", self.on_tab_switched)
 
             # Feed command into the newly created terminal
-            GLib.idle_add(lambda: terminal.feed_child(final_cmd.encode()))
+            GLib.timeout_add(100, lambda: terminal.feed_child(final_cmd.encode()))
         else:
             terminal = self.notebook.get_nth_page(self.notebook.get_current_page())
             terminal.feed_child(final_cmd.encode())
