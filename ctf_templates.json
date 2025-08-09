@@ -83,5 +83,20 @@
     "label": "nc port 80",
     "command": "sudo nc -lvnp 80",
     "category": "Listeners"
+  },
+  {
+    "label": "evil-winrm",
+    "command": "evil-winrm -i '<$IP>' -u '<$Username>' -p '<$Password>'",
+    "category": "SMB"
+  },
+  {
+    "label": "running services",
+    "command": "Get-CimInstance -ClassName win32_service | Select Name,State,PathName | Where-Object {$_.State -like 'Running'}",
+    "category": "WinPrivEsc"
+  },
+  {
+    "label": "whoami",
+    "command": "whoami /all",
+    "category": "WinPrivESC"
   }
 ]
